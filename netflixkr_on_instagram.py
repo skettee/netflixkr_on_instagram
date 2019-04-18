@@ -1,3 +1,7 @@
+#
+# 넷플릭스 코리아 on 인스타그램 
+#
+#%%
 import requests
 from requests.exceptions import HTTPError
 from bs4 import BeautifulSoup
@@ -6,17 +10,21 @@ import json
 from datetime import datetime
 from datetime import timedelta
 
-# moabot 컴포넌트를 가져온다.
-import moabot_database as moabot
-from moabot_id import *
+if __debug__:
+    import os.path
+
+# 모아보기 컴포넌트를 가져온다.
+import moabogey_database as moabogey
+from moabogey_id import *
 
 # 사이트 이름
 site_name = 'instagram'
 # 사이트에서 가져올 주제
-section_name = 'netflixkr'
+subject_name = 'netflixkr'
 # 사이트 주소
 site_url = 'https://www.instagram.com/netflixkr/?hl=ko'
-print('site url is: ', site_url)
+if __debug__:
+    print('{} 데이터 수집 중...'.format(site_url))
 
 # 사이트의 HTML을 가져온다.
 try:
@@ -35,21 +43,19 @@ else:
     # BeautifulSoup 오브젝트를 생성한다.
     soup = BeautifulSoup(html_source, 'html.parser')
     
-    # 디버그를 위해서 page의 소스를 파일로 저장한다.
-    # 봇으로 등록하기 위해서는 주석처리를 해야한다.
-    #import os.path
-    #file_name = site_name + '_requests.html'
-    #if not os.path.isfile(file_name):
-    #    print('file save: ', file_name)
-    #    with open(file_name, 'w') as f:
-    #        f.write(soup.prettify())
-    
-    # 데이터를 저장할 데이터베이스를 연다. 
-    # bot_id는 moabot_id에서 가져오는 변수값이다.
-    # 프로그램을 종료하기 전에 데이터 베이스를 닫아야 한다.
-    db_name = section_name + '_on_' + site_name 
-    my_db = moabot.Dbase(db_name, bot_id)
-    
+    # HTML을 분석하기 위해서 페이지의 소스를 파일로 저장한다.
+    if __debug__:
+        file_name = site_name + '_source.html'
+        if not os.path.isfile(file_name):
+            print('file save: ', file_name)
+            with open(file_name, 'w', encoding='utf-8') as f:
+                f.write(soup.prettify())
+       
+    # 데이터를 저장할 데이터베이스를 생성한다. 
+    # bot_id는 moabogey_id에서 가져온 값이다.
+    db_name = subject_name + '_on_' + site_name 
+    my_db = moabogey.Dbase(db_name, bot_id)
+            
     post_json = ''
     # 정보가 저장되어 있는 json파일을 수집한다.
     for post in soup.find_all('script', {'type': 'text/javascript'}):
@@ -59,13 +65,16 @@ else:
     #print(post_json[len(post_json) -100 :])
     
     json_data = json.loads(post_json)
-    
-    # dump data for debug
-    #post_dump = json.dumps(json_data, indent=4)
-    #print(post_dump[:100])
-    #with open('json_dump.json', 'w') as f:
-    #     f.write(post_dump)
-    
+
+    # JSON을 분석하기 위해서 JSON DUMP를 파일로 저장한다.
+    if __debug__:
+        json_dump = json.dumps(json_data, indent=4)
+        file_name = site_name + '_json_source.json'
+        if not os.path.isfile(file_name):
+            print('file save: ', file_name)
+            with open('json_dump.json', 'w') as f:
+                f.write(json_dump)
+
     # entry_data.ProfilePage[0].graphql.user.edge_owner_to_timeline_media.edges[]
     # title: node.edge_media_to_caption.edges[0].node.text
     # url: node.shortcode
@@ -129,13 +138,19 @@ else:
                     'timeStamp': moa_timeStamp
                 }
 
-                # 디버그를 위해서 수집한 데이터를 출력한다.
-                temp_data = db_data.copy()
-                temp_data['desc'] = temp_data['desc'][:20] + '...'
-                print(json.dumps(temp_data, indent=4, ensure_ascii=False, default=str))
+                if __debug__:
+                    # 디버그를 위해서 수집한 데이터를 출력한다.
+                    temp_data = db_data.copy()
+                    temp_data['desc'] = temp_data['desc'][:20] + '...'
+                    print('collected json data: ')
+                    print(json.dumps(temp_data, indent=4, ensure_ascii=False, default=str))
 
                 # 수집한 데이터를 데이터베이스에 전송한다.
                 my_db.insertTable(db_data)
+
+    # 데이터 베이스에 저장된 데이터를 디스플레이 한다.
+    if __debug__:
+        my_db.displayHTML()
 
     # 데이터 베이스를 닫는다.
     my_db.close()
