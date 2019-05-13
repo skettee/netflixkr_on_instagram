@@ -1,6 +1,115 @@
+#%% [markdown]
+# ## 넷플릭스 인스타 🤖
+# ### 넷플릭스 인스타그램을 모아주는 봇입니다.
+# 
+# ### 개발 환경 만들기
+# 
+#  봇을 개발하기 위해서는 몇가지 소프트웨어를 설치하고 환경을 설정해야 합니다. 
+#  [개발 환경 만들기](https://github.com/moabogey/docs/wiki/개발환경만들기)를 참조 하세요.
+# 
+# ### 코드 실행
+# 
+#  - 터미널 실행
+#    1. 🖼  Windows PowerShell을 실행한다.
+#    2. 🍎 Terminal을 실행한다.
+# 
+#  - 작업할 폴더를 생성한다.
+# 
+#  ```
+#  mkdir MyWork
+#  ```
+# 
+#  - 작업할 폴더로 이동한다.
+#  
+#  ```
+#  cd MyWork
+#  ```
+# 
+#  - 깃 클론 (Git Clone)을 수행한다.
+# 
+#  ```
+#  git clone https://github.com/skettee/netflixkr_on_instagram.git
+#  ```
+# 
+#  - 복사한 코드의 폴더로 이동한다.
+# 
+#  ```
+#  cd netflixkr_on_instagram
+#  ```
+# 
+#  - VSCode를 실행한다.
+# 
+#  ```
+#  code .
+#  ```
+# 
+#  - 왼쪽 EXPLORE에서 `netflixkr_on_instagram.py`를 선택한다.
+# 
+#  - 하단 바에 `Python3.7.3 64-bit('base':conda)`를 누른다.
+# 
+#  - `Python 3.6.8 64-bit ('moabogey':conda)`를 선택한다.
+# 
+#  - 소스 코드에 RunCell | Run Below에서 `Run Below`를 누른다.
+# 
+#  - 데이터가 정상적으로 수집이 되는지 오른쪽 Python Interactive에서 확인한다. 
+#    
 #
-# 넷플릭스 코리아 on 인스타그램 
+# ### 코드 분석
+# 
+#  netflixkr_on_instagram.py를 분석합니다.  
+#  봇의 소스 코드는 크게 세단계로 나눌 수 있습니다.  
+# 
+#  1. 사이트의 HTML에서 JSON 데이터를 수집
+# 
+#  2. JSON 데이터에서 포스트 데이터를 수집
+# 
+#  3. 데이터 저장
+#  
+# **사이트의 HTML에서 JSON 데이터를 수집**
+#  
+#    - 데이터를 수집할 사이트의 정보와 주소를 설정합니다. 여기에서는 https://www.instagram.com/netflixkr/?hl=ko 에서 데이터를 수집합니다.
+# 
+#    - requests와 beautifulsoup4를 이용해서 사이트의 HTML을 가져오고 파일로 저장합니다.
+# 
+#    - 저장된 HTML파일 (instagram_source.html)을 열어 봅니다. 여기서 우리가 원하는 정보를 가지고 있는 JSON 데이터를 찾습니다.
 #
+#    - JSON을 분석하기 위해 JSON DUMP를 파일로 저장합니다.
+#  
+# **JSON 데이터에서 포스트 데이터를 수집**
+#  
+#    - 저장된 JSON파일 (json_dump.json)을 열어 봅니다. 여기서 우리는 "포스트의 리스트"를 표현하는 구간을 찾을 것입니다. **포스트**는 제목, 내용, 이미지, 작성자, 작성 날짜 및 페이지 위치(URL)를 가지고 있는 하나의 문서를 나타내는 용어로 사용합니다.
+# 
+#    ```
+#    entry_data.ProfilePage[0].graphql.user.edge_owner_to_timeline_media.edges[ (Post1), (Post2), ...]
+#    ```
+# 
+#    - 발견한 포스트에서 아래와 같이 제목, 포스트 위치(URL), 포스트 시간, 이미지 및 작성자를 찾습니다.
+# 
+#    ```
+#    title: node.edge_media_to_caption.edges[0].node.text
+#    url: node.shortcode
+#    createdAt: node.taken_at_timestamp
+#    image: node.display_url
+#    createdBy: node.owner.username
+#    ```
+#  
+# **데이터 저장**
+# 
+#    - 수집한 데이터를 선별해서 중복되는 것을 제외하고 데이터베이스에 저장합니다. 모아보기 봇은 하루에 24번 이상 동작 하도록 되어 있기 때문에 한번에 모든 데이터를 수집하지 않고 가장 최근의 데이터 1~2개를 수집하는 것이 원칙입니다. 여기서는 현재 날짜에 포스팅된 것만 수집합니다.
+#  
+#
+# ### 참고 사이트
+#  
+# - [개발 환경 만들기](https://github.com/moabogey/docs/wiki/개발환경만들기)
+#
+# - [예제 코드 실행](https://github.com/moabogey/docs/wiki/예제코드실행)
+#
+# - [코딩을 하기 전에](https://github.com/moabogey/docs/wiki/코딩하기전에)
+#
+# - [예제 코드 분석](https://github.com/moabogey/docs/wiki/예제코드분석)
+#
+# - [봇 개발 하기](https://github.com/moabogey/docs/wiki/봇개발하기)
+
 #%%
 import requests
 from requests.exceptions import HTTPError
@@ -86,7 +195,7 @@ else:
     for edge in edges:
         timestamp = int(edge['node']['taken_at_timestamp'])
         delta = datetime.now() - datetime.fromtimestamp(timestamp)
-        if  delta.days <= 0:
+        if  delta.days <= 2:
         
             title = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
             # Title
