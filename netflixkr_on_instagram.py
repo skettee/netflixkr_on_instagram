@@ -195,7 +195,7 @@ else:
     for edge in edges:
         timestamp = int(edge['node']['taken_at_timestamp'])
         delta = datetime.now() - datetime.fromtimestamp(timestamp)
-        if  delta.days <= 2:
+        if  delta.days <= 0:
         
             title = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
             # Title
