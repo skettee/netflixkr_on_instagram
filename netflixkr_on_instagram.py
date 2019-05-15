@@ -57,7 +57,7 @@
 # 
 # - `Python 3.6.8 64-bit ('moabogey':conda)`를 선택한다.
 # 
-# - 소스 코드에 RunCell | Run Below에서 `Run Below`를 누른다.
+# - 소스 코드에 `RunCell | Run Below`에서 `Run Below`를 누른다.
 # 
 # - 데이터가 정상적으로 수집이 되는지 오른쪽 Python Interactive에서 확인한다. 
 #    
